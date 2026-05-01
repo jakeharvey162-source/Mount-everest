@@ -3,140 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mount Everest</title>
+    <title>Mount Everest Tourism | Expedition Portal</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D environment -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         
+        :root {
+            --bg-dark: #020617;
+            --accent: #3b82f6;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }
-        
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            background-color: var(--bg-dark);
             color: white;
-            text-align: center;
-            padding: 3rem 1rem;
+            scroll-behavior: smooth;
         }
-        
-        header h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
+
+        /* 3D Canvas Layer */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
         }
-        
-        header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
+
+        /* UI Layer */
+        #content-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
         }
-        
-        main {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+
+        .interactive { pointer-events: auto; }
+
+        /* Glassmorphism Design Tokens */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        section {
-            margin-bottom: 2rem;
+
+        .glass-light {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        h2 {
-            color: #667eea;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 0.5rem;
+
+        /* Elevation Visualization */
+        .elevation-line {
+            background: linear-gradient(to top, #3b82f6, #60a5fa, #fbbf24, #ffffff);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
-        
-        p {
-            margin-bottom: 1rem;
-            text-align: justify;
+
+        /* Chat Window Styling */
+        #chat-window {
+            height: 500px;
+            width: 350px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            border-radius: 1.5rem;
+            color: #0f172a;
         }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin: 1rem 0;
+
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+
+        .chat-bubble-bot {
+            background: #f1f5f9;
+            color: #1e293b;
+            border-radius: 1rem 1rem 1rem 0;
+            padding: 0.75rem 1rem;
+            max-width: 85%;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
         }
-        
-        .stat-card {
-            background: #f4f4f4;
-            padding: 1.5rem;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .stat-card strong {
-            color: #667eea;
-            font-size: 1.5rem;
-        }
-        
-        footer {
-            background: #333;
+
+        .chat-bubble-user {
+            background: #2563eb;
             color: white;
-            text-align: center;
-            padding: 1rem;
-            margin-top: 2rem;
+            border-radius: 1rem 1rem 0 1rem;
+            padding: 0.75rem 1rem;
+            max-width: 85%;
+            align-self: flex-end;
+            font-size: 0.875rem;
+        }
+
+        /* Animations */
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 30s linear infinite;
+        }
+
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>🏔️ Mount Everest</h1>
-        <p>The World's Highest Mountain</p>
-    </header>
-    
-    <main>
-        <section>
-            <h2>About Mount Everest</h2>
-            <p>
-                Mount Everest is the world's highest mountain above sea level, located in the Himalayas on the border 
-                between Nepal and Tibet. It has long been a goal for mountaineers and adventurers from around the world.
-            </p>
-        </section>
-        
-        <section>
-            <h2>Key Facts</h2>
-            <div class="stats">
-                <div class="stat-card">
-                    <strong>29,032 ft</strong>
-                    <p>Height (8,849 m)</p>
-                </div>
-                <div class="stat-card">
-                    <strong>1953</strong>
-                    <p>First Ascent</p>
-                </div>
-                <div class="stat-card">
-                    <strong>~4,000+</strong>
-                    <p>People Summited</p>
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <div id="content-layer">
+        <!-- Navigation Header -->
+        <header class="fixed top-0 w-full p-6 flex justify-between items-center interactive z-50 bg-gradient-to-b from-slate-950/50 to-transparent">
+            <div class="text-2xl font-extrabold tracking-tighter flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-sm shadow-lg shadow-blue-600/50">🏔️</div>
+                <span>EVEREST<span class="text-blue-500">.</span>EXPLORE</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <nav class="hidden md:flex gap-8 text-xs font-bold uppercase tracking-widest">
+                    <a href="#explore" class="hover:text-blue-400 transition-colors">Destinations</a>
+                    <a href="#planning" class="hover:text-blue-400 transition-colors">Planning</a>
+                    <a href="#safety" class="hover:text-blue-400 transition-colors">Safety</a>
+                </nav>
+                <select id="lang-switch" class="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase rounded-full px-4 py-2 outline-none interactive hover:bg-white/20 cursor-pointer">
+                    <option value="en" class="bg-slate-900">English</option>
+                    <option value="ne" class="bg-slate-900">Nepali</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="h-screen flex flex-col justify-center px-6 md:px-20 interactive">
+            <div class="max-w-4xl">
+                <span class="inline-block bg-blue-500/20 text-blue-400 text-[10px] font-black px-4 py-2 rounded-full mb-6 tracking-[0.3em] uppercase">Gateway to the Himalayas</span>
+                <h1 class="text-6xl md:text-9xl font-black leading-[0.9] mb-8 drop-shadow-2xl">
+                    Beyond the <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-white">Horizon.</span>
+                </h1>
+                <p class="text-lg text-slate-400 mb-10 max-w-xl leading-relaxed">
+                    Witness the majesty of Earth's highest peak. From cultural immersions in Namche Bazaar to the spiritual silence of the high camps.
+                </p>
+                <div class="flex gap-4 flex-wrap">
+                    <a href="#explore" class="bg-blue-600 hover:bg-blue-700 px-10 py-5 rounded-full font-bold transition-all shadow-xl shadow-blue-600/40 text-sm">Start Expedition</a>
+                    <button onclick="downloadList()" class="glass hover:bg-white/10 px-10 py-5 rounded-full font-bold transition-all text-sm">Packing List</button>
                 </div>
             </div>
         </section>
-        
-        <section>
-            <h2>History</h2>
-            <p>
-                The first successful ascent of Mount Everest was on May 29, 1953, by Sir Edmund Hillary of New Zealand 
-                and Tenzing Norgay, a Sherpa of Nepal. Since then, thousands of climbers have attempted to reach the summit, 
-                making it both a symbol of human achievement and a testament to the dangers of extreme mountaineering.
-            </p>
-        </section>
-        
-        <section>
-            <h2>Climbing Routes</h2>
-            <p>
-                There are two main routes to the summit: the South Col route from Nepal and the North Col route from Tibet. 
-                Each route has its own challenges, including extreme altitude, severe weather, and dangerous terrain.
-            </p>
-        </section>
-    </main>
-    
-    <footer>
-        <p>&copy; 2026 Mount Everest Information Site. All rights reserved.</p>
-    </footer>
+
+        <!-- Side Widgets (Desktop Only) -->
+        <div class="absolute right-8 top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-6 interactive">
+            <div class="glass p-6 rounded-[2rem] w-64">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Base Camp Live</h4>
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-4xl font-light">-14°C</span>
+                    <span class="text-blue-400 text-2xl">☀️</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-[10px] text-slate-500 font-bold uppercase">
+                        <span>Wind Speed</span>
+                        <span class="text-white">12 km/h</span>
+                    </div>
+                    <div class="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500 w-4/5 shadow-[0_0_10px_#3b82f6]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-[2rem] w-64 h-80 flex flex-col">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Ascent Map</h4>
+                <div class="flex-1 flex gap-6">
+                    <div class="w-1.5 rounded-full elevation-line"></div>
+                    <div class="flex flex-col justify-between text-[10px] font-black tracking-tighter">
+                        <div class="group cursor-help">
+                            <span class="text-white text-xs">8,848m</span><br>
+                            <span class="text-slate-500 uppercase tracking-widest">Summit</span>
+                        </div>
+                        <div class="group cursor-help">
+                            <span class="text-amber-400 text-xs">5,364m</span><br>
+                            <span class="text-slate-500 uppercase tracking-widest">Base Camp</span>
+                        </div>
+                        <div class="group cursor-help">
+                            <span class="text-blue-400 text-xs">3,440m</span><br>
+                            <span class="text-slate-500 uppercase tracking-widest">Namche</span>
+                        </div>
+                        <div class="group cursor-help">
+                            <span class="text-emerald-400 text-xs">2,860m</span><br>
+                            <span class="text-slate-500 uppercase tracking-widest">Lukla</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main id="explore" class="bg-slate-950/90 pt-32 pb-40 interactive">
+            <div class="max-w-7xl mx-auto px-6">
+                <!-- Destinations -->
+                <div class="mb-20 text-center">
+                    <h2 class="text-5xl font-black mb-6">Iconic Locations</h2>
+                    <p class="text-slate-500 max-w-2xl mx-auto">Explore the most significant landmarks on the journey to the top of the world.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10" id="places-grid">
+                    <!-- Cards injected via JS -->
+                </div>
+
+                <!-- Ticker Banner -->
+                <div class="mt-40 overflow-hidden bg-blue-600/10 py-12 rounded-[2.5rem] border border-white/5 relative">
+                    <div class="animate-marquee whitespace-nowrap text-4xl font-black tracking-widest uppercase text-blue-500/50">
+                        Summit Attempts • Sherpa Culture • Icefall Crossing • Base Camp Trek • Heli Tours • Glacier Hikes • Summit Attempts • Sherpa Culture • 
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-black py-24 interactive text-center border-t border-white/5">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="text-2xl font-black mb-12 flex justify-center items-center gap-2">
+                    <div class="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">🏔️</div>
+                    EVEREST.EXPLORE
+                </div>
+                <p class="text-slate-600 text-xs mb-8 tracking-[0.2em] uppercase">© 2026 OFFICIAL HIMALAYAN EXPEDITION PORTAL — ALL RIGHTS RESERVED.</p>
+                <div class="flex justify-center flex-wrap gap-10 text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">
+                    <a href="#" class="hover:text-blue-500 transition-colors">Permits</a>
+                    <a href="#" class="hover:text-blue-500 transition-colors">Climbing Safety</a>
+                    <a href="#" class="hover:text-blue-500 transition-colors">Sherpa Fund</a>
+                    <a href="#" class="hover:text-blue-500 transition-colors">Contact</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- CHATBOT INTERFACE -->
+        <div class="fixed bottom-8 right-8 z-[1000] interactive flex flex-col items-end">
+            <!-- Chat Window -->
+            <div id="chat-window" class="mb-6 overflow-hidden flex flex-col">
+                <div class="bg-blue-600 p-5 text-white flex justify-between items-center shadow-lg shadow-blue-600/20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_#4ade80]"></div>
+                        <span class="font-extrabold tracking-tight">Everest Assistant</span>
+                    </div>
+                    <button onclick="toggleChat()" class="hover:bg-white/20 p-1 rounded-lg transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div id="chat-messages" class="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-50 flex flex-col h-[320px]">
+                    <div class="chat-bubble-bot shadow-sm">
+                        Namaste! I'm your local Everest expert. I can help with information about <b>difficulty, costs, permits, packing, safety,</b> and the <b>best seasons</b> for trekking. How can I help you today?
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white border-t border-slate-100 flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-medium">
+                    <button onclick="handleChat()" class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-90">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Floating Toggle Button -->
+            <button onclick="toggleChat()" class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl shadow-blue-600/50 hover:scale-110 active:scale-95 transition-all group">
+                <svg class="w-8 h-8 text-white group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- CHATBOT INTELLIGENCE (Keyword Matching) ---
+        const botData = {
+            responses: {
+                difficulty: "The Everest Base Camp trek is physically demanding but technically 'Moderate'. You don't need technical climbing skills, but you do need great cardio endurance and mental stamina.",
+                season: "The best trekking seasons are Spring (March to May) and Autumn (late September to November). Spring offers blooming rhododendrons, while Autumn offers the clearest mountain views.",
+                sickness: "Altitude Sickness (AMS) is a serious concern above 3,000m. Symptoms include headache and nausea. We recommend ascending no more than 500m per day and taking rest days in Namche Bazaar.",
+                packing: "Essential gear includes: A -20°C rated down jacket, thermal layers, trekking poles, high-quality UV400 sunglasses, water purification tablets, and broken-in trekking boots.",
+                guide: "Since April 2023, the Nepal government has made it mandatory to hire a licensed local guide for trekking in most mountain regions to improve safety.",
+                cost: "A standard EBC trek costs between $1,500 and $4,000 depending on the level of luxury. A full summit expedition costs between $45,000 and $100,000.",
+                safety: "Safety relies on proper acclimatization, hydration, and weather monitoring. Always have travel insurance that covers emergency helicopter evacuation up to 6,000m.",
+                permits: "Trekkers need two main permits: The Khumbu Pasang Lhamu Rural Municipality Permit and the Sagarmatha National Park Entry Permit.",
+                hello: "Namaste! I am your Everest Assistant. Do you have questions about costs, permits, or trek difficulty?",
+                hi: "Hello! How can I assist your Himalayan expedition today?",
+                namaste: "Namaste! I am happy to help you with information about climbing or trekking Everest."
+            },
+            unknown: "I'm sorry, I don't understand that question yet. Please contact a local certified guide or visit the Nepal Tourism Board website for more specific inquiries."
+        };
+
+        function toggleChat() {
+            const win = document.getElementById('chat-window');
+            const isVisible = win.style.display === 'flex';
+            win.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) document.getElementById('chat-input').focus();
+        }
+
+        function handleChat() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Simple Keyword Parsing
+            const lowercaseMsg = message.toLowerCase();
+            let foundResponse = null;
+
+            for (const key in botData.responses) {
+                if (lowercaseMsg.includes(key)) {
+                    foundResponse = botData.responses[key];
+                    break;
+                }
+            }
+
+            const finalReply = foundResponse || botData.unknown;
+
+            // Bot response with a small delay for "thinking" effect
+            setTimeout(() => {
+                addChatMessage(finalReply, 'bot');
+            }, 600);
+        }
+
+        function addChatMessage(text, sender) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = sender === 'user' ? 'chat-bubble-user shadow-md' : 'chat-bubble-bot shadow-sm';
+            div.innerHTML = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- CONTENT DATA ---
+        const destinations = [
+            { name: "Kala Patthar", elev: "5,644m", desc: "The ultimate viewpoint for the iconic Everest sunrise. Reach the highest point accessible without a climbing permit.", img: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=800" },
+            { name: "Base Camp", elev: "5,364m", desc: "Walk where legends start. The vibrant heart of the climbing world and the foot of the Khumbu Icefall.", img: "https://images.unsplash.com/photo-1585468274952-66591eb14165?q=80&w=800" },
+            { name: "Namche Bazaar", elev: "3,440m", desc: "The Sherpa capital. A vibrant, amphitheater-shaped town filled with culture, coffee shops, and history.", img: "https://images.unsplash.com/photo-1516616370751-86d6bd8b03f0?q=80&w=800" }
+        ];
+
+        function renderDestinations() {
+            const grid = document.getElementById('places-grid');
+            grid.innerHTML = destinations.map(p => `
+                <div class="glass overflow-hidden rounded-[2.5rem] group hover-lift interactive border-white/5 hover:border-blue-500/30">
+                    <div class="h-64 overflow-hidden relative">
+                        <img src="${p.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute bottom-4 left-4 bg-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
+                            Elevation: ${p.elev}
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-2xl font-black mb-4">${p.name}</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">${p.desc}</p>
+                        <div class="mt-6 flex items-center gap-2 text-blue-400 text-xs font-bold uppercase tracking-widest cursor-pointer group-hover:gap-4 transition-all">
+                            Explore Location <span>→</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function downloadList() {
+            const data = "OFFICIAL EVEREST TREKKING CHECKLIST\n\n[Clothing]\n- 1x Down Jacket (-20C)\n- 1x Waterproof Shell\n- 4x Pairs Wool Socks\n- 1x Thermal Base Layer\n\n[Gear]\n- UV400 Sunglasses\n- Trekking Poles\n- 2L Water Bottle\n- 40L Daypack\n\n[Medical]\n- Diamox (Altitude)\n- Water Purification Tabs\n- SPF 50 Sunscreen";
+            const blob = new Blob([data], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "everest-packing-list.txt";
+            a.click();
+        }
+
+        // --- 3D ENVIRONMENT (Three.js) ---
+        let scene, camera, renderer, peak;
+
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 25);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Subtle Atmospheric Lighting
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(5, 10, 7);
+            scene.add(sun);
+            scene.add(new THREE.AmbientLight(0x4040ff, 0.3));
+
+            // Low-Poly Abstract Mountain
+            const geometry = new THREE.ConeGeometry(14, 20, 6, 8);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x1e293b, 
+                flatShading: true,
+            });
+            
+            peak = new THREE.Mesh(geometry, material);
+            scene.add(peak);
+
+            // Clouds / Fog
+            scene.fog = new THREE.FogExp2(0x020617, 0.02);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                peak.rotation.y += 0.001;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // --- WINDOW EVENTS ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleChat();
+        });
+
+        window.onload = () => {
+            init3D();
+            renderDestinations();
+            
+            // Initializing Language Switcher logic
+            document.getElementById('lang-switch').addEventListener('change', (e) => {
+                if (e.target.value === 'ne') {
+                    document.querySelector('h1').innerHTML = "क्षितिज भन्दा <br><span class='text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-white'>पछाडि।</span>";
+                } else {
+                    document.querySelector('h1').innerHTML = "Beyond the <br><span class='text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-white'>Horizon.</span>";
+                }
+            });
+        };
+    </script>
 </body>
 </html>
